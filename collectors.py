@@ -1,50 +1,48 @@
 from __future__ import asbsolute_import
 from .conf import ConfigObject
-
+from numpy import random
 import argparse
-import random
-import requests
+import grequests
 import simplejson
 import time
 
-# stores configuration options/defaults
-config = ConfigObject()
+class Collector:
 
+    def __init__(self, config_object):
+        self.conf = config_object
 # arbitrary default ranges.
-def track_collection(n, min_comment, min_range=100, max_range=50000):
-    collect = []
-    while True:
-        track_id = random.randrange(min_range, max_range, 1)
-        r = requests.get(track_url.format(id=track_id),
-            params = {'client_id': '6482e060ad0be4c70ee8cf6df6ff7aeb'})
-        if r.status_code != 200:
-            continue
+    def track_collection(self, n=self.conf.n,
+                         min_comment=self.conf.min_comment,
+                         min_range=self.conf.min_range,
+                         max_range=self.conf.min_range):
+        coll = []
+        t_id_vector = random.randint(min_range, max_range, size=n)
+        r = lambda t_id: grequests.get(track_url.format(id=t_id),
+                             params = {'client_id': self.conf.client_id})
         track_candid = simplejson.loads(r.content)
         if track_candid['comment_count'] < min_comment:
             continue
-        collect.append(track_candid)
-        if (len(collect) == n):
-            return collect
+        coll.append(track_candid)
+        if (len(coll) == n):
+            return coll
 
-def comment_collection(tracks):
-    track_comm = lambda track_id: requests.get(comment_url.format(id=track_id),
-    params = {'client_id': '6482e060ad0be4c70ee8cf6df6ff7aeb'})
-    track_ids = [ t.get('id') for t in tracks ]
-    collect = map(lambda r: simplejson.loads(r.content),
-                map(track_comm, track_ids))
-    return collect
+    def comment_collection(self, tracks):
+        t_comm = lambda t_id: grequests.get(self.conf.comment_url.format(id=t_id),
+                              params = {'client_id': self.conf.client_id})
+        t_ids = [ t.get('id') for t in tracks ]
+        collect = map(lambda r: simplejson.loads(r.content),
+                    map(t_comm, t_ids))
+        return collect
 
 
+    def pp_results(tc, cc):
+        results = 'Tracks: {track_count} Comments: {comment_count}'
+        print results.format(track_count=len(tc), comment_count=len(cc))
 
-tc = track_collection(args.n, args.min_comment)
-cc = comment_collection(tc)
-def pp_results(tc, cc):
-    results = 'Tracks: {track_count} Comments: {comment_count}'
-    print results.format(track_count=len(tc), comment_count=len(cc))
+def main():
+    config_object = ConfigObject()
+    c = Collector(config_object)
+    tc = c.track_collection()
+    cc = c.comment_collection(tc)
 
-# test /me
-r = requests.get('https://api.soundcloud.com/users/ziaunys.json',
-    params = {'client_id': '6482e060ad0be4c70ee8cf6df6ff7aeb'})
-
-user = simplejson.loads(r.content)
 
