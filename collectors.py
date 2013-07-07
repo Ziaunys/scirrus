@@ -1,10 +1,14 @@
 from __future__ import asbsolute_import
+from .conf import ConfigObject
 
 import argparse
 import random
 import requests
 import simplejson
 import time
+
+# stores configuration options/defaults
+config = ConfigObject()
 
 # arbitrary default ranges.
 def track_collection(n, min_comment, min_range=100, max_range=50000):
@@ -13,7 +17,7 @@ def track_collection(n, min_comment, min_range=100, max_range=50000):
         track_id = random.randrange(min_range, max_range, 1)
         r = requests.get(track_url.format(id=track_id),
             params = {'client_id': '6482e060ad0be4c70ee8cf6df6ff7aeb'})
-        if r.status_code == 404:
+        if r.status_code != 200:
             continue
         track_candid = simplejson.loads(r.content)
         if track_candid['comment_count'] < min_comment:
