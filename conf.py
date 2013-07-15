@@ -5,6 +5,7 @@ class ConfigObject(object):
     track_url = 'https://api.soundcloud.com/tracks/{id}.json'
     min_range = 100
     max_range = 50000
+    async_limit = 5
 
     def __init__(self, args):
         parser = argparse.ArgumentParser()
@@ -17,8 +18,3 @@ class ConfigObject(object):
         [ parser.add_argument(arg, **opts) for (arg, opts) in parser_options ]
         args = parser.parse_args()
         self.__dict__.update(dict(args._get_kwargs()))
-
-
-
-
-
